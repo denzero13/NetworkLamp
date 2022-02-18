@@ -1,25 +1,21 @@
-from functions import ip_scan_diapason, start_get_printer_info
-from config import ip_network_diapason
-import time
+from time import sleep
+import datetime
+
+from network_lamp_app.functions import start_get_printer_info, ip_scan_diapason
 
 
-t = time.time()
+def run():
+    print("Big scan")
+    ip_scan_diapason(ip_diapason="172.16.0.0/20")
 
-if __name__ == '__main__':
-    print("Start first scan")
-    ip_scan_diapason(ip_diapason=ip_network_diapason)
-    start_get_printer_info(time=t)
-    print("End first start scan")
-    order_run = 0
     while True:
-        if time.time() - t > 1000:
-            if order_run == 4:
-                print("Devises scan")
-                ip_scan_diapason(ip_diapason=ip_network_diapason)
-                print("Devises scan done")
-                n = 0
-            print("Printers scan")
-            start_get_printer_info(t)
-            print("Printers scan done")
-            order_run += 1
-            t = time.time()
+        hour = datetime.datetime.today().hour
+        minute = datetime.datetime.today().minute
+        start_get_printer_info()
+
+        if hour in [4, 6, 7, 11, 12, 18, 19, 22, 23] and minute >= 50:
+            print("Big scan")
+            ip_scan_diapason(ip_diapason="172.16.0.0/20")
+
+        sleep(20)
+

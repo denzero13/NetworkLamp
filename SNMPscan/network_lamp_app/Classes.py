@@ -1,5 +1,5 @@
 import pandas as pd
-from config import tmp, visual_for_terminal
+from network_lamp_app.config import tmp, visual_for_terminal
 
 
 class PrinterModel:
@@ -55,6 +55,8 @@ class DataPreparationForVisual:
         df = pd.read_csv(tmp)
 
         try:
+            df["TonerLevel"] = df["TonerLevel"].fillna(0)
+            df["CartridgeMaxCapacity"] = df["CartridgeMaxCapacity"].fillna(0)
             df["Level"] = [int(float(df["TonerLevel"][i]) * 100 / float(df["CartridgeMaxCapacity"][i]))
                            for i in range(len(df))]
 

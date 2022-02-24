@@ -1,7 +1,7 @@
 import json
 import datetime
 import csv
-from multiprocessing import Pool
+import concurrent.futures
 
 
 import pandas as pd
@@ -9,7 +9,7 @@ from pysnmp.entity.rfc3413.oneliner import cmdgen
 from pysnmp.hlapi import getCmd, SnmpEngine, CommunityData, UdpTransportTarget, ContextData, ObjectType, ObjectIdentity
 import ipaddress
 import socket
-from getmac import getmac
+import getmac
 from mac_vendor_lookup import MacLookup
 
 from network_lamp_app.Classes import PrinterModel
@@ -35,13 +35,14 @@ def snmp_cmd_get(ip_address, community="public", port=161):
     The function takes the address and checks
     it for the SNMP v1 v2 protocol whit standard settings
     """
-    iterator = getCmd(SnmpEngine(),
-                      CommunityData(community, mpModel=0),
-                      UdpTransportTarget((ip_address, port)),
-                      ContextData(),
-                      ObjectType(ObjectIdentity('SNMPv2-MIB', 'sysDescr', 0)))
+    try:
+        iterator = getCmd(SnmpEngine(),
+                          CommunityData(community, mpModel=0), UdpTransportTarget((ip_address, port)),
+                          ContextData(), ObjectType(ObjectIdentity('SNMPv2-MIB', 'sysDescr', 0)))
 
-    errorIndication, errorStatus, errorIndex, varBinds = next(iterator)
+        errorIndication, errorStatus, errorIndex, varBinds = next(iterator)
+    except:
+        return None
 
     if errorIndication:  # SNMP engine errors
         return None
@@ -62,9 +63,8 @@ def ip_scan_diapason(ip_diapason="172.16.0.0/22"):
     """
     print("Start scan local network")
     ip_diapason = ipaddress.IPv4Network(ip_diapason)
-    number_of_ip = ip_diapason.prefixlen
 
-    with Pool(number_of_ip) as processing:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=60) as processing:
         data = processing.map(device_snmp_filter, ip_diapason)
 
     for device in data:
@@ -90,6 +90,9 @@ def device_snmp_filter(ip_address):
     ip_dict["snmp"] = snmp_cmd_get(ip)
     ip_dict["mac-address"] = getmac.get_mac_address(ip=ip, network_request=True)
 
+    if ip_dict["mac-address"] == "00:00:00:00:00:00":
+        ip_dict["mac-address"] = None
+
     if ip_dict["mac-address"]:
         try:
             ip_dict["company"] = MacLookup().lookup(str(ip_dict["mac-address"]))
@@ -103,7 +106,7 @@ def device_snmp_filter(ip_address):
         ip_dict["hostname"] = socket.gethostbyaddr(ip)[0]
     except socket.herror:
         ip_dict["hostname"] = "none"
-
+    print(ip_dict)
     return ip_dict
 
 
@@ -146,15 +149,7 @@ def multi_scan_run():
             if oid_list:
                 devices.append([dev, oid_list])
 
-    i = 2
-    n = len(devices)
-    while i <= n:
-        i = i + 1
-        if n % i == 0:
-            print(i)
-            break
-
-    with Pool(i) as processing:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=60) as processing:
         data = processing.map(oid_scan, devices)
 
 

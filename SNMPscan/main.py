@@ -17,5 +17,8 @@ def run():
             print("Big scan")
             ip_scan_diapason(ip_diapason="172.16.0.0/20")
 
-        sleep(20)
+        sleep(600)
 
+
+if __name__ == "__main__":
+    run()

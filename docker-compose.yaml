@@ -1,7 +1,7 @@
 version: '3'
 services:
 
-  flask:
+  dash:
     build:
       context: ./
       dockerfile: Dockerfile
@@ -24,10 +24,8 @@ services:
       - frontend
       - backend
 
-db.createUser({user: 'admindb', pwd: 'qwertyrud13', roles: [{role: 'readWrite', db: 'network_lamp_db'}]})
-
   mongodb:
-    image: mongo:4.0.8
+    image: mongo:5.0
     container_name: mongodb
     restart: unless-stopped
     command: mongod --auth
@@ -36,7 +34,9 @@ db.createUser({user: 'admindb', pwd: 'qwertyrud13', roles: [{role: 'readWrite', 
       MONGO_INITDB_ROOT_PASSWORD: qwertyrud13
       MONGO_INITDB_DATABASE: network_lamp_db
       MONGODB_DATA_DIR: /data/db
-      MONDODB_LOG_DIR: /dev/null
+      MONDODB_LOG_DIR: /dev/
+    ports:
+      - 27017:27017
     volumes:
       - mongodbdata:/data/db
     networks:
@@ -47,6 +47,7 @@ networks:
     driver: bridge
   backend:
     driver: bridge
+
 
 volumes:
   mongodbdata:

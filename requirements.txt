@@ -1,0 +1,12 @@
+pandas
+dash
+plotly
+numpy
+Flask
+requests
+pysnmp
+getmac
+pymongo
+gunicorn
+mac_vendor_lookup
+dash_bootstrap_components
